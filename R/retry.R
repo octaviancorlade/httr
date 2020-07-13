@@ -63,7 +63,7 @@ RETRY <- function(verb, url = NULL, config = list(), ...,
 
   i <- 1
   while (!retry_should_terminate(i, times, resp, terminate_on, terminate_on_success)) {
-    backoff_full_jitter(i, resp, pause_base, pause_cap, pause_min, quiet = quiet)
+    backoff_decorrelated_jitter(i, resp, pause_base, pause_cap, pause_min, quiet = quiet)
 
     i <- i + 1
     resp <- tryCatch(request_perform(req, hu$handle$handle), error = function(e) e)
@@ -90,9 +90,9 @@ retry_should_terminate <- function(i, times, resp, terminate_on, terminate_on_su
   }
 }
 
-backoff_full_jitter <- function(i, resp, pause_base = 1, pause_cap = 60,
+backoff_decorrelated_jitter <- function(i, resp, pause_base = 1, pause_cap = 60,
                                 pause_min = 1, quiet = FALSE) {
-  length <- max(pause_min, stats::runif(1, max = min(pause_cap, pause_base * (2^i))))
+  length <- max(pause_min, min(pause_cap, ((2^i) + stats::runif(0, max = pause_base)))
   if (!quiet) {
     if (inherits(resp, "error")) {
       error_description <- gsub("[\n\r]*$", "\n", as.character(resp))
